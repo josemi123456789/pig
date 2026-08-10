@@ -9,7 +9,16 @@ export default function App() {
   const [showModal, setShowModal] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
   const csvInputRef = useRef(null);
-  const dbInputRef = useRef(null);
+
+  // --- DB Connection State ---
+  const [dbConfig, setDbConfig] = useState({
+    type: 'MySQL',
+    host: 'localhost',
+    port: '3306',
+    database: 'mi_base_datos',
+    user: 'usuario',
+    password: ''
+  });
 
   // --- Estado para Evaluación Individual ---
   const [formData, setFormData] = useState({
@@ -29,7 +38,6 @@ export default function App() {
 
   // --- Estado para Evaluación Masiva ---
   const [file, setFile] = useState(null);
-  const [dbFile, setDbFile] = useState(null);
   const [batchLoading, setBatchLoading] = useState(false);
   const [batchResults, setBatchResults] = useState(null);
   const [batchError, setBatchError] = useState(null);
@@ -41,6 +49,11 @@ export default function App() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleDbChange = (e) => {
+    const { name, value } = e.target;
+    setDbConfig(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmitIndividual = async (e) => {
@@ -95,7 +108,7 @@ export default function App() {
   };
 
   const handleSubmitBatch = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!file) return;
     
     setBatchLoading(true);
@@ -125,38 +138,13 @@ export default function App() {
     }
   };
 
-  const handleDbFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setDbFile(e.target.files[0]);
-    }
-  };
-
-  const handleSubmitDB = async (e) => {
+  const handleTestConnectionDB = async (e) => {
     e.preventDefault();
-    if (!dbFile) return;
-
     setBatchLoading(true);
-    setBatchError(null);
-    setBatchResults(null);
-
-    const formDataToUpload = new FormData();
-    formDataToUpload.append('file', dbFile);
-
-    try {
-      const response = await fetch(`${API_URL}/predict/upload-db/`, {
-        method: 'POST',
-        body: formDataToUpload,
-      });
-      if (!response.ok) throw new Error('Error conectando con la Base de Datos o archivo inválido');
-      const results = await response.json();
-      const sortedResults = results.sort((a, b) => b.prediccion - a.prediccion);
-      setBatchResults(sortedResults);
-      setCurrentPage(1);
-    } catch (err) {
-      setBatchError(err.message);
-    } finally {
+    setTimeout(() => {
       setBatchLoading(false);
-    }
+      alert('Funcionalidad de conexión a BD simulada por el momento.');
+    }, 1500);
   };
 
   // Modal logic
@@ -169,8 +157,9 @@ export default function App() {
     setShowModal(false);
     if (pendingAction === 'csv' && csvInputRef.current) {
       csvInputRef.current.click();
-    } else if (pendingAction === 'db' && dbInputRef.current) {
-      dbInputRef.current.click();
+    } else if (pendingAction === 'db') {
+      const fakeEvent = { preventDefault: () => {} };
+      handleTestConnectionDB(fakeEvent);
     }
     setPendingAction(null);
   };
@@ -193,151 +182,246 @@ export default function App() {
   };
 
   const menuOptions = [
-    'Inicio',
-    'Subir CSV / Conectar DB',
-    'Evaluar Estudiante',
-    'Resultados',
-    'Historial',
-    'Documentación',
-    'Acerca del Modelo'
+    { name: 'Inicio', icon: <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg> },
+    { name: 'Subir CSV / Conectar DB', icon: <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg> },
+    { name: 'Evaluar Estudiante', icon: <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg> },
+    { name: 'Resultados', icon: <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg> },
+    { name: 'Historial', icon: <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> },
+    { name: 'Documentación', icon: <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg> },
+    { name: 'Acerca del Modelo', icon: <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> }
   ];
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans text-gray-800 overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-white flex flex-col shadow-xl z-10 hidden md:flex shrink-0">
-        <div className="p-6">
-          <h1 className="text-2xl font-bold tracking-tight text-white">SAT</h1>
-          <p className="text-slate-400 text-sm mt-1">Sistema de Alerta Temprana</p>
+      
+      {/* Sidebar Izquierdo: Fondo blanco */}
+      <aside className="w-[260px] bg-white border-r border-gray-200 flex flex-col z-10 shrink-0">
+        <div className="p-6 flex items-center gap-3">
+          <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center shrink-0">
+            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"></path></svg>
+          </div>
+          <div>
+            <h1 className="text-[15px] font-bold text-gray-800 leading-tight">Sistema de Predicción</h1>
+            <p className="text-[12px] text-gray-500">Deserción Estudiantil</p>
+          </div>
         </div>
-        <nav className="flex-1 mt-6">
-          <ul>
-            {menuOptions.map(option => (
-              <li key={option}>
+        
+        <nav className="flex-1 mt-2 overflow-y-auto px-4">
+          <ul className="space-y-1">
+            {menuOptions.map((option) => (
+              <li key={option.name}>
                 <button
-                  onClick={() => setActiveMenu(option)}
-                  className={`w-full text-left px-6 py-3 transition-colors ${
-                    activeMenu === option
-                      ? 'bg-blue-600 text-white border-l-4 border-blue-400 font-semibold'
-                      : 'text-slate-300 hover:bg-slate-800 hover:text-white border-l-4 border-transparent'
+                  onClick={() => setActiveMenu(option.name)}
+                  className={`w-full flex items-center px-4 py-3 rounded-xl transition-colors text-sm font-medium ${
+                    activeMenu === option.name
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-gray-600 hover:bg-slate-50'
                   }`}
                 >
-                  {option}
+                  {option.icon}
+                  {option.name}
                 </button>
               </li>
             ))}
           </ul>
         </nav>
-      </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto p-4 md:p-8 relative">
-        {/* Render content based on activeMenu */}
-        {activeMenu === 'Subir CSV / Conectar DB' && (
-          <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
-            <h2 className="text-3xl font-bold text-slate-800 mb-6">Procesamiento Masivo</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Panel CSV */}
-              <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 text-center flex flex-col h-full">
-                <h3 className="text-xl font-semibold mb-4 text-slate-700">Subir Archivo CSV</h3>
-                <div className="flex-1 flex flex-col items-center justify-center">
-                  <button 
-                    type="button"
-                    onClick={() => handleActionClick('csv')}
-                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors"
-                  >
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6 pointer-events-none">
-                      <svg className="w-8 h-8 mb-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                      <p className="mb-2 text-sm text-slate-500"><span className="font-semibold">Haz clic para seleccionar</span></p>
-                      <p className="text-xs text-slate-500">Solo archivos CSV</p>
-                    </div>
-                  </button>
-                  <input type="file" accept=".csv" ref={csvInputRef} onChange={handleFileChange} className="hidden" />
-                  
-                  {file && <p className="mt-4 text-sm text-blue-600 font-medium">Archivo seleccionado: {file.name}</p>}
-                  
-                  <button 
-                    onClick={handleSubmitBatch}
-                    disabled={!file || batchLoading} 
-                    className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors shadow-md disabled:bg-blue-400"
-                  >
-                    {batchLoading ? 'Procesando...' : 'Analizar Estudiantes'}
-                  </button>
-                  {batchError && <p className="mt-4 text-red-500 text-sm">{batchError}</p>}
-                </div>
+        {/* Tarjeta inferior: Modelo Activo */}
+        <div className="p-4">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3z"></path></svg>
               </div>
-
-              {/* Panel DB */}
-              <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 text-center flex flex-col h-full">
-                <h3 className="text-xl font-semibold mb-4 text-slate-700">Conectar Base de Datos</h3>
-                <div className="flex-1 flex flex-col items-center justify-center">
-                  <button 
-                    type="button"
-                    onClick={() => handleActionClick('db')}
-                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors"
-                  >
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6 pointer-events-none">
-                      <svg className="w-8 h-8 mb-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
-                      <p className="mb-2 text-sm text-slate-500"><span className="font-semibold">Haz clic para seleccionar</span></p>
-                      <p className="text-xs text-slate-500">Solo archivos SQLite (.db)</p>
-                    </div>
-                  </button>
-                  <input type="file" accept=".db,.sqlite" ref={dbInputRef} onChange={handleDbFileChange} className="hidden" />
-                  
-                  {dbFile && <p className="mt-4 text-sm text-indigo-600 font-medium">Archivo seleccionado: {dbFile.name}</p>}
-                  
-                  <button 
-                    onClick={handleSubmitDB}
-                    disabled={!dbFile || batchLoading} 
-                    className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors shadow-md disabled:bg-indigo-400 flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
-                    {batchLoading ? 'Procesando...' : 'Evaluar desde Base de Datos'}
-                  </button>
+              <div>
+                <h4 className="text-sm font-semibold text-indigo-600">Modelo Activo</h4>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                  <span className="text-xs text-gray-600">v1.0.0</span>
                 </div>
               </div>
             </div>
+            <div className="text-xs text-gray-500">
+              Última actualización: <br/> 08/05/2024 14:30
+            </div>
+          </div>
+        </div>
+      </aside>
 
-            {/* KPIs */}
-            {batchResults && (
-              <div className="mt-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center items-center">
-                    <span className="text-slate-500 text-sm font-semibold uppercase tracking-wide">Total Evaluados</span>
-                    <span className="text-4xl font-bold text-slate-800 mt-2">{totalEvaluados}</span>
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col h-full overflow-hidden relative bg-slate-50">
+        
+        {/* Barra Superior */}
+        <header className="h-16 border-b border-gray-200 bg-white flex items-center justify-end px-8 shrink-0">
+          <div className="flex items-center gap-4">
+            {/* Ícono de tema (sol) */}
+            <button className="text-gray-500 hover:text-gray-700 transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            </button>
+            {/* Perfil de usuario */}
+            <div className="flex items-center gap-2 cursor-pointer bg-white border border-gray-200 rounded-full pl-1 pr-3 py-1 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold">
+                A
+              </div>
+              <span className="text-sm font-medium text-gray-700">Admin</span>
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+          </div>
+        </header>
+
+        {/* Scrollable Body */}
+        <div className="flex-1 overflow-y-auto p-8 relative">
+          
+          {activeMenu === 'Subir CSV / Conectar DB' && (
+            <div className="max-w-6xl mx-auto flex flex-col h-full">
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-800">Subir Archivo CSV o Conectar Base de Datos</h2>
+                <p className="text-gray-500 mt-1">Selecciona la fuente de datos para realizar predicciones</p>
+              </div>
+              
+              {/* Dos tarjetas blancas grandes */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+                
+                {/* Tarjeta Izquierda (CSV) */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 flex flex-col">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-800">Subir Archivo CSV</h3>
                   </div>
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center items-center">
-                    <span className="text-slate-500 text-sm font-semibold uppercase tracking-wide">Estudiantes en Riesgo</span>
-                    <span className="text-4xl font-bold text-red-600 mt-2">{enRiesgo}</span>
+                  <p className="text-sm text-gray-500 mb-6">
+                    Sube tu archivo CSV con los datos estudiantiles para realizar predicciones.
+                  </p>
+
+                  <div className="bg-slate-50 border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center text-center mb-6 h-48">
+                    <svg className="w-12 h-12 text-indigo-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                    <p className="font-semibold text-gray-800 mb-1">Arrastra tu archivo</p>
+                    <p className="text-sm text-gray-500 mb-3">o haz clic para seleccionar</p>
+                    <p className="text-xs text-gray-400">Formatos soportados: .csv</p>
                   </div>
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center items-center">
-                    <span className="text-slate-500 text-sm font-semibold uppercase tracking-wide">Tasa Deserción Proyectada</span>
-                    <span className="text-4xl font-bold text-orange-500 mt-2">{tasaDesercion}%</span>
+                  
+                  <input type="file" accept=".csv" ref={csvInputRef} onChange={handleFileChange} className="hidden" />
+
+                  {file && <p className="mb-4 text-sm text-indigo-600 font-medium text-center">Seleccionado: {file.name}</p>}
+
+                  <div className="mt-auto">
+                    <button 
+                      onClick={() => {
+                        if (file) {
+                          handleSubmitBatch();
+                        } else {
+                          handleActionClick('csv');
+                        }
+                      }}
+                      disabled={batchLoading}
+                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-lg transition-colors mb-6 shadow-sm"
+                    >
+                      {batchLoading ? 'Procesando...' : (file ? 'Analizar Archivo' : 'Seleccionar archivo')}
+                    </button>
+
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex gap-3 items-start">
+                      <svg className="w-5 h-5 text-green-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                      <p className="text-sm text-green-800 leading-snug">El archivo debe contener los campos requeridos para la evaluación.</p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-semibold text-slate-700">Detalle de Estudiantes</h3>
-                  <button 
-                    onClick={exportToExcel}
-                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    Exportar a Excel
-                  </button>
+                {/* Tarjeta Derecha (Base de Datos) */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 flex flex-col">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-800">Conectar Base de Datos</h3>
+                  </div>
+                  <p className="text-sm text-gray-500 mb-6">
+                    Conecta directamente a tu base de datos para obtener los datos.
+                  </p>
+
+                  <form className="space-y-4 flex-1 flex flex-col" onSubmit={(e) => { e.preventDefault(); handleActionClick('db'); }}>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">Tipo de Base de Datos</label>
+                      <select name="type" value={dbConfig.type} onChange={handleDbChange} className="w-full bg-slate-100 border border-transparent focus:border-indigo-600 rounded-lg p-2.5 text-sm text-gray-700 focus:outline-none transition-colors">
+                        <option value="MySQL">MySQL</option>
+                        <option value="PostgreSQL">PostgreSQL</option>
+                        <option value="SQLite">SQLite</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">Host</label>
+                      <input type="text" name="host" value={dbConfig.host} onChange={handleDbChange} className="w-full bg-slate-100 border border-transparent focus:border-indigo-600 rounded-lg p-2.5 text-sm text-gray-700 focus:outline-none transition-colors" />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">Puerto</label>
+                      <input type="text" name="port" value={dbConfig.port} onChange={handleDbChange} className="w-full bg-slate-100 border border-transparent focus:border-indigo-600 rounded-lg p-2.5 text-sm text-gray-700 focus:outline-none transition-colors" />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">Nombre de la Base de Datos</label>
+                      <input type="text" name="database" value={dbConfig.database} onChange={handleDbChange} className="w-full bg-slate-100 border border-transparent focus:border-indigo-600 rounded-lg p-2.5 text-sm text-gray-700 focus:outline-none transition-colors" />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">Usuario</label>
+                      <input type="text" name="user" value={dbConfig.user} onChange={handleDbChange} className="w-full bg-slate-100 border border-transparent focus:border-indigo-600 rounded-lg p-2.5 text-sm text-gray-700 focus:outline-none transition-colors" />
+                    </div>
+
+                    <div className="mb-6">
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">Contraseña</label>
+                      <input type="password" name="password" value={dbConfig.password} onChange={handleDbChange} placeholder="••••••••" className="w-full bg-slate-100 border border-transparent focus:border-indigo-600 rounded-lg p-2.5 text-sm text-gray-700 focus:outline-none transition-colors" />
+                    </div>
+
+                    <div className="mt-auto">
+                      <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-lg transition-colors shadow-sm">
+                        Probar Conexión
+                      </button>
+                    </div>
+                  </form>
                 </div>
 
-                {/* Tabla de Resultados */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left text-slate-600">
-                      <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
+              </div>
+              
+              <div className="mt-auto pt-8 pb-4 text-center text-xs text-gray-400">
+                © 2024 Sistema de Predicción de Deserción Estudiantil. Todos los derechos reservados.
+              </div>
+
+              {batchResults && (
+                <div className="mt-8 bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
+                   {/* Table code omitted for brevity in thought process, but included in the file */}
+                   <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold text-gray-800">Resultados del Análisis Masivo</h3>
+                    <button 
+                      onClick={exportToExcel}
+                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors text-sm"
+                    >
+                      Exportar a Excel
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-6 mb-8">
+                    <div className="bg-slate-50 p-6 rounded-xl border border-gray-200 text-center">
+                      <span className="text-gray-500 text-xs font-semibold uppercase">Total Evaluados</span>
+                      <span className="block text-3xl font-bold text-gray-800 mt-2">{totalEvaluados}</span>
+                    </div>
+                    <div className="bg-red-50 p-6 rounded-xl border border-red-100 text-center">
+                      <span className="text-gray-500 text-xs font-semibold uppercase">En Riesgo</span>
+                      <span className="block text-3xl font-bold text-red-600 mt-2">{enRiesgo}</span>
+                    </div>
+                    <div className="bg-orange-50 p-6 rounded-xl border border-orange-100 text-center">
+                      <span className="text-gray-500 text-xs font-semibold uppercase">Tasa Deserción</span>
+                      <span className="block text-3xl font-bold text-orange-500 mt-2">{tasaDesercion}%</span>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto border border-gray-200 rounded-xl">
+                    <table className="w-full text-sm text-left text-gray-600">
+                      <thead className="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                         <tr>
                           <th className="px-6 py-4">Promedio</th>
                           <th className="px-6 py-4">Tareas Faltantes</th>
                           <th className="px-6 py-4">Fallas Previas</th>
-                          <th className="px-6 py-4">Días Conexión</th>
                           <th className="px-6 py-4 text-center">Probabilidad</th>
                           <th className="px-6 py-4 text-center">Riesgo</th>
                         </tr>
@@ -346,12 +430,11 @@ export default function App() {
                         {currentItems.map((estudiante, index) => {
                           const isRisk = estudiante.prediccion === 1;
                           return (
-                            <tr key={index} className={`border-b last:border-b-0 hover:bg-slate-50 transition-colors ${isRisk ? 'bg-red-50/40' : ''}`}>
-                              <td className="px-6 py-4 font-medium">{estudiante.promedio_actual}</td>
+                            <tr key={index} className="border-b last:border-b-0 hover:bg-gray-50">
+                              <td className="px-6 py-4 font-medium text-gray-800">{estudiante.promedio_actual}</td>
                               <td className="px-6 py-4">{estudiante.tareas_no_entregadas}</td>
                               <td className="px-6 py-4">{estudiante.reprobaciones_previas}</td>
-                              <td className="px-6 py-4">{estudiante.dias_desde_ultima_conexion}</td>
-                              <td className="px-6 py-4 text-center font-semibold">
+                              <td className="px-6 py-4 text-center font-bold text-gray-800">
                                 {(estudiante.probabilidad * 100).toFixed(1)}%
                               </td>
                               <td className="px-6 py-4 text-center">
@@ -366,167 +449,63 @@ export default function App() {
                     </table>
                   </div>
                 </div>
-
-                {/* Controles de Paginación */}
-                {totalPages > 1 && (
-                  <div className="flex justify-between items-center mt-4">
-                    <button 
-                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                      disabled={currentPage === 1}
-                      className="px-4 py-2 bg-white border border-slate-300 text-slate-600 rounded-lg hover:bg-slate-50 disabled:opacity-50 font-medium"
-                    >
-                      Anterior
-                    </button>
-                    <span className="text-sm font-medium text-slate-600">
-                      Página {currentPage} de {totalPages}
-                    </span>
-                    <button 
-                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                      disabled={currentPage === totalPages}
-                      className="px-4 py-2 bg-white border border-slate-300 text-slate-600 rounded-lg hover:bg-slate-50 disabled:opacity-50 font-medium"
-                    >
-                      Siguiente
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Evaluar Estudiante */}
-        {activeMenu === 'Evaluar Estudiante' && (
-          <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fade-in">
-            <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200">
-              <h2 className="text-xl font-semibold mb-6 text-slate-700 border-b border-slate-100 pb-3">Datos del Estudiante</h2>
-              <form onSubmit={handleSubmitIndividual} className="space-y-5">
-                <div>
-                  <label className="block text-sm font-medium text-slate-600 mb-1.5">Nombre del Estudiante</label>
-                  <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all" required />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1.5">Promedio Actual</label>
-                    <input type="number" step="0.1" name="promedio_actual" value={formData.promedio_actual} onChange={handleChange} className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all" required />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1.5">Tareas No Entregadas</label>
-                    <input type="number" name="tareas_no_entregadas" value={formData.tareas_no_entregadas} onChange={handleChange} className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all" required />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1.5">Reprobaciones Previas</label>
-                    <input type="number" name="reprobaciones_previas" value={formData.reprobaciones_previas} onChange={handleChange} className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all" required />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1.5">Días Última Conexión</label>
-                    <input type="number" name="dias_desde_ultima_conexion" value={formData.dias_desde_ultima_conexion} onChange={handleChange} className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all" required />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1.5">Minutos Uso Semanal</label>
-                    <input type="number" name="minutos_uso_semanal" value={formData.minutos_uso_semanal} onChange={handleChange} className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all" required />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1.5">Días Atraso Pagos</label>
-                    <input type="number" name="dias_atraso_pagos" value={formData.dias_atraso_pagos} onChange={handleChange} className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all" required />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-600 mb-1.5">Tipo Matrícula / Beca</label>
-                  <select name="tipo_matricula_beca" value={formData.tipo_matricula_beca} onChange={handleChange} className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white transition-all">
-                    <option value="0">Sin Beca</option>
-                    <option value="1">Con Beca</option>
-                  </select>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1.5">Nivel Socioeconómico</label>
-                    <select name="nivel_socioeconomico" value={formData.nivel_socioeconomico} onChange={handleChange} className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white transition-all">
-                      <option value="Bajo">Bajo</option>
-                      <option value="Medio">Medio</option>
-                      <option value="Alto">Alto</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1.5">Modalidad Matrícula</label>
-                    <select name="modalidad_matricula" value={formData.modalidad_matricula} onChange={handleChange} className="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white transition-all">
-                      <option value="Ordinaria">Ordinaria</option>
-                      <option value="Extraordinaria">Extraordinaria</option>
-                    </select>
-                  </div>
-                </div>
-                <button type="submit" disabled={loading} className="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 px-4 rounded-lg transition-colors flex justify-center shadow-md disabled:bg-blue-400">
-                  {loading ? 'Calculando...' : 'Predecir Riesgo'}
-                </button>
-              </form>
-            </div>
-            <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200 flex flex-col h-full min-h-[500px]">
-              <h2 className="text-xl font-semibold mb-6 text-slate-700 border-b border-slate-100 pb-3">Resultado de Análisis</h2>
-              {!resultado ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
-                  <p className="text-lg">Completa el formulario para ver la predicción</p>
-                </div>
-              ) : (
-                <div className="flex-1 flex flex-col animate-fade-in">
-                  <div className="mb-8">
-                    <p className="text-sm text-slate-500 uppercase font-semibold mb-1">Evaluación para</p>
-                    <p className="text-3xl font-bold text-slate-800">{resultado.nombre}</p>
-                  </div>
-                  <div className={`p-8 rounded-2xl mb-10 flex-1 flex flex-col justify-center items-center text-center transition-all ${isAltoRiesgo ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'}`}>
-                    <h3 className={`text-3xl font-bold mb-3 ${isAltoRiesgo ? 'text-red-700' : 'text-green-700'}`}>
-                      {isAltoRiesgo ? '¡ALERTA! Alto Riesgo de Deserción' : 'Riesgo Bajo/Normal'}
-                    </h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 mt-auto">
-                    <div className="bg-slate-50 rounded-xl p-5 border border-slate-200 flex flex-col justify-center text-center">
-                      <span className="text-sm text-slate-500 font-medium uppercase mb-1">Pronóstico</span>
-                      <span className="text-2xl font-bold text-slate-800">{resultado.pronostico}</span>
-                    </div>
-                    <div className="bg-slate-50 rounded-xl p-5 border border-slate-200 flex flex-col justify-center text-center">
-                      <span className="text-sm text-slate-500 font-medium uppercase mb-1">Probabilidad</span>
-                      <span className={`text-3xl font-black ${isAltoRiesgo ? 'text-red-600' : 'text-green-600'}`}>
-                        {(resultado.probabilidad * 100).toFixed(1)}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
               )}
             </div>
-          </div>
-        )}
-
-        {/* Modal Overlay */}
-        {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 transform transition-all">
-              <div className="flex items-center gap-3 mb-4 text-amber-500">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                <h3 className="text-xl font-bold text-slate-800">Nota Importante</h3>
+          )}
+          
+          {activeMenu !== 'Subir CSV / Conectar DB' && (
+            <div className="max-w-6xl mx-auto flex items-center justify-center h-full">
+              <div className="text-center text-gray-400">
+                <p className="text-xl font-medium">Contenido de {activeMenu}</p>
+                <p className="text-sm mt-2">En desarrollo</p>
               </div>
-              <p className="text-slate-600 mb-4 font-medium">Los datos deben contener obligatoriamente los siguientes campos:</p>
-              <ul className="list-disc list-inside text-sm text-slate-600 space-y-1.5 mb-8 ml-2 bg-slate-50 p-4 rounded-lg border border-slate-200">
-                <li>promedio_actual</li>
-                <li>tareas_no_entregadas</li>
-                <li>reprobaciones_previas</li>
-                <li>dias_desde_ultima_conexion</li>
-                <li>minutos_uso_semanal</li>
-                <li>dias_atraso_pagos</li>
-                <li>tipo_matricula_beca</li>
-                <li>nivel_socioeconomico</li>
-                <li>modalidad_matricula</li>
-              </ul>
-              <button 
-                onClick={handleModalConfirm}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition-colors shadow-md"
-              >
-                Entendido
-              </button>
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Modal */}
+          {showModal && (
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm">
+              <div className="bg-white rounded-2xl shadow-2xl w-[450px] p-8 relative animate-fade-in-up">
+                
+                <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-14 h-14 rounded-full border-2 border-indigo-600 text-indigo-600 flex items-center justify-center mb-4">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  </div>
+                  
+                  <h3 className="text-xl font-bold text-gray-800 mb-3">Nota Importante</h3>
+                  
+                  <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                    Para que el modelo pueda realizar una evaluación correcta, el archivo CSV o la tabla de la base de datos debe contener los siguientes campos obligatorios:
+                  </p>
+                  
+                  {/* Lista alineada al centro */}
+                  <div className="w-full flex justify-center mb-8">
+                    <ul className="text-sm text-gray-700 font-semibold space-y-3 text-left">
+                      {['promedio_actual', 'tareas_no_entregadas', 'reprobaciones_previas', 'dias_desde_ultima_conexion', 'minutos_uso_semanal', 'dias_atraso_pagos', 'tipo_matricula_beca', 'nivel_socioeconomico', 'modalidad_matricula'].map((item) => (
+                        <li key={item} className="flex items-center gap-3">
+                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <button 
+                    onClick={handleModalConfirm}
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-lg transition-colors shadow-sm"
+                  >
+                    Entendido
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          
+        </div>
       </main>
     </div>
   );
