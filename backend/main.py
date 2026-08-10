@@ -60,12 +60,9 @@ def save_to_historial(df):
         historial_df['nivel_riesgo'] = df['riesgo']
         
         with engine.begin() as conn:
-            for record in historial_df.to_dict(orient="records"):
-                conn.execute(historial_table.insert().values(
-                    nombre_estudiante=record['nombre_estudiante'],
-                    probabilidad=record['probabilidad'],
-                    nivel_riesgo=record['nivel_riesgo']
-                ))
+            records = historial_df.to_dict(orient="records")
+            if records:
+                conn.execute(historial_table.insert(), records)
         print(f"Historial: {len(historial_df)} registros guardados correctamente.")
     except Exception as e:
         print(f"Error guardando en historial (no bloquea respuesta): {e}")
