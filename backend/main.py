@@ -54,13 +54,17 @@ def save_to_historial(df):
         historial_df['probabilidad'] = df['probabilidad']
         historial_df['nivel_riesgo'] = df['riesgo']
         
-        with engine.begin() as conn:
+        conn = engine.connect()
+        try:
             for record in historial_df.to_dict(orient="records"):
                 conn.execute(historial_table.insert().values(
                     nombre_estudiante=record['nombre_estudiante'],
                     probabilidad=record['probabilidad'],
                     nivel_riesgo=record['nivel_riesgo']
                 ))
+            conn.commit()
+        finally:
+            conn.close()
     except Exception as e:
         print(f"Error guardando en historial: {e}")
 
@@ -236,6 +240,8 @@ async def predict_upload_db(file: UploadFile = File(...)):
     if not (file.filename.endswith('.db') or file.filename.endswith('.sqlite')):
         raise HTTPException(status_code=400, detail="El archivo debe ser una base de datos SQLite (.db o .sqlite).")
         
+    response_data = None
+    temp_engine = None
     # Guardar archivo temporal
     fd, temp_path = tempfile.mkstemp(suffix=".db")
     try:
@@ -285,19 +291,27 @@ async def predict_upload_db(file: UploadFile = File(...)):
         
         save_to_historial(results_df)
         
-        return results_df.to_dict(orient="records")
+        response_data = results_df.to_dict(orient="records")
         
+    except HTTPException:
+        raise
     except Exception as e:
         import traceback
         tb = traceback.format_exc()
         raise HTTPException(status_code=500, detail=f"Error procesando la base de datos: {str(e)}")
     finally:
+        # Liberar la conexión a la base de datos temporal
+        if temp_engine is not None:
+            temp_engine.dispose()
+            
         # Eliminar archivo temporal
         if os.path.exists(temp_path):
             try:
                 os.remove(temp_path)
             except:
                 pass
+
+    return response_data
 
 @app.get("/historial")
 async def get_historial():
