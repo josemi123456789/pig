@@ -331,10 +331,10 @@ def predict_upload_db(file: UploadFile = File(...)):
     return response_data
 
 @app.get("/historial")
-async def get_historial():
+def get_historial():
     try:
         with engine.connect() as conn:
-            query = historial_table.select().order_by(historial_table.c.fecha.desc())
+            query = historial_table.select().order_by(historial_table.c.fecha.desc()).limit(100)
             result = conn.execute(query).fetchall()
             
             data = []
