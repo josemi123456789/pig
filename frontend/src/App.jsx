@@ -739,61 +739,69 @@ export default function App() {
 
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left text-gray-600">
-                    <thead className="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
-                      <tr>
-                        <th className="px-6 py-4">Nombre Estudiante</th>
-                        {activeMenu === 'Resultados' && batchResults && <th className="px-6 py-4 text-center">Matrícula</th>}
-                        <th className="px-6 py-4 text-center">{activeMenu === 'Resultados' && batchResults ? 'Promedio' : 'Fecha'}</th>
-                        <th className="px-6 py-4 text-center">Probabilidad</th>
-                        <th className="px-6 py-4 text-center">Nivel de Riesgo</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {activeMenu === 'Resultados' && batchResults ? (
-                        currentItems.map((record, index) => (
-                          <tr key={index} className="border-b last:border-b-0 hover:bg-gray-50">
-                            <td className="px-6 py-4 font-medium text-gray-800">{record.nombre || `Estudiante #${index+1}`}</td>
-                            <td className="px-6 py-4 text-center">{record.modalidad_matricula || 'N/A'}</td>
-                            <td className="px-6 py-4 text-center">{record.promedio_actual !== undefined ? record.promedio_actual : 'N/A'}</td>
-                            <td className="px-6 py-4 text-center font-bold text-gray-700">{(record.probabilidad * 100).toFixed(1)}%</td>
-                            <td className="px-6 py-4 text-center">
-                              <span className={`px-3 py-1 rounded-full text-xs font-bold ${record.prediccion === 1 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                                {record.riesgo}
-                              </span>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        currentHistoryItems.filter(record => 
-                          record.nombre_estudiante.toLowerCase().includes(historySearchTerm.toLowerCase()) || 
-                          record.nivel_riesgo.toLowerCase().includes(historySearchTerm.toLowerCase())
-                        ).length > 0 ? (
-                          currentHistoryItems.filter(record => 
-                            record.nombre_estudiante.toLowerCase().includes(historySearchTerm.toLowerCase()) || 
-                            record.nivel_riesgo.toLowerCase().includes(historySearchTerm.toLowerCase())
-                          ).map((record, index) => (
+                  {activeMenu === 'Resultados' && !batchResults ? (
+                    <div className="px-6 py-12 text-center text-gray-500">
+                      <svg className="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                      <h3 className="text-lg font-medium text-gray-900 mb-1">No hay resultados recientes</h3>
+                      <p className="text-sm">Sube un archivo CSV o conecta una base de datos para ver predicciones aquí.</p>
+                    </div>
+                  ) : (
+                    <table className="w-full text-sm text-left text-gray-600">
+                      <thead className="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
+                        <tr>
+                          <th className="px-6 py-4">Nombre Estudiante</th>
+                          {activeMenu === 'Resultados' && batchResults && <th className="px-6 py-4 text-center">Matrícula</th>}
+                          <th className="px-6 py-4 text-center">{activeMenu === 'Resultados' && batchResults ? 'Promedio' : 'Fecha'}</th>
+                          <th className="px-6 py-4 text-center">Probabilidad</th>
+                          <th className="px-6 py-4 text-center">Nivel de Riesgo</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {activeMenu === 'Resultados' && batchResults ? (
+                          currentItems.map((record, index) => (
                             <tr key={index} className="border-b last:border-b-0 hover:bg-gray-50">
-                              <td className="px-6 py-4 font-medium text-gray-800">{record.nombre_estudiante}</td>
-                              <td className="px-6 py-4 text-center">{record.fecha}</td>
+                              <td className="px-6 py-4 font-medium text-gray-800">{record.nombre || `Estudiante #${index+1}`}</td>
+                              <td className="px-6 py-4 text-center">{record.modalidad_matricula || 'N/A'}</td>
+                              <td className="px-6 py-4 text-center">{record.promedio_actual !== undefined ? record.promedio_actual : 'N/A'}</td>
                               <td className="px-6 py-4 text-center font-bold text-gray-700">{(record.probabilidad * 100).toFixed(1)}%</td>
                               <td className="px-6 py-4 text-center">
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${record.nivel_riesgo === 'Alto' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                                  {record.nivel_riesgo}
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${record.prediccion === 1 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                  {record.riesgo}
                                 </span>
                               </td>
                             </tr>
                           ))
                         ) : (
-                          <tr>
-                            <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
-                              No se encontraron registros.
-                            </td>
-                          </tr>
-                        )
-                      )}
-                    </tbody>
-                  </table>
+                          currentHistoryItems.filter(record => 
+                            record.nombre_estudiante.toLowerCase().includes(historySearchTerm.toLowerCase()) || 
+                            record.nivel_riesgo.toLowerCase().includes(historySearchTerm.toLowerCase())
+                          ).length > 0 ? (
+                            currentHistoryItems.filter(record => 
+                              record.nombre_estudiante.toLowerCase().includes(historySearchTerm.toLowerCase()) || 
+                              record.nivel_riesgo.toLowerCase().includes(historySearchTerm.toLowerCase())
+                            ).map((record, index) => (
+                              <tr key={index} className="border-b last:border-b-0 hover:bg-gray-50">
+                                <td className="px-6 py-4 font-medium text-gray-800">{record.nombre_estudiante}</td>
+                                <td className="px-6 py-4 text-center">{record.fecha}</td>
+                                <td className="px-6 py-4 text-center font-bold text-gray-700">{(record.probabilidad * 100).toFixed(1)}%</td>
+                                <td className="px-6 py-4 text-center">
+                                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${record.nivel_riesgo === 'Alto' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                    {record.nivel_riesgo}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
+                                No se encontraron registros.
+                              </td>
+                            </tr>
+                          )
+                        )}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
                 
                 {/* Controles de paginación universales (para Resultados y Historial) */}
