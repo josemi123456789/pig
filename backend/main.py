@@ -27,7 +27,12 @@ encoders = None
 
 # Base de datos global e historial
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./historial.db")
-engine = create_engine(DATABASE_URL)
+
+# Crear engine con timeouts para evitar bloqueos
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(DATABASE_URL, connect_args={"timeout": 10}, pool_pre_ping=True)
+else:
+    engine = create_engine(DATABASE_URL, pool_timeout=10, pool_pre_ping=True)
 metadata = MetaData()
 
 historial_table = Table(
@@ -54,19 +59,16 @@ def save_to_historial(df):
         historial_df['probabilidad'] = df['probabilidad']
         historial_df['nivel_riesgo'] = df['riesgo']
         
-        conn = engine.connect()
-        try:
+        with engine.begin() as conn:
             for record in historial_df.to_dict(orient="records"):
                 conn.execute(historial_table.insert().values(
                     nombre_estudiante=record['nombre_estudiante'],
                     probabilidad=record['probabilidad'],
                     nivel_riesgo=record['nivel_riesgo']
                 ))
-            conn.commit()
-        finally:
-            conn.close()
+        print(f"Historial: {len(historial_df)} registros guardados correctamente.")
     except Exception as e:
-        print(f"Error guardando en historial: {e}")
+        print(f"Error guardando en historial (no bloquea respuesta): {e}")
 
 @app.on_event("startup")
 def load_artifacts():
@@ -164,9 +166,15 @@ async def predict_batch(file: UploadFile = File(...)):
         results_df['probabilidad'] = probs.astype(float)
         results_df['riesgo'] = np.where(preds == 1, "Alto", "Bajo")
         
-        save_to_historial(results_df)
+        response_data = results_df.to_dict(orient="records")
         
-        return results_df.to_dict(orient="records")
+        # Guardar en historial DESPUÉS de preparar la respuesta
+        try:
+            save_to_historial(results_df)
+        except Exception as hist_err:
+            print(f"Historial falló pero la respuesta continúa: {hist_err}")
+        
+        return response_data
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error procesando el archivo: {str(e)}")
@@ -219,10 +227,16 @@ async def predict_db():
         results_df['probabilidad'] = probs.astype(float)
         results_df['riesgo'] = np.where(preds == 1, "Alto", "Bajo")
         
-        save_to_historial(results_df)
+        response_data = results_df.to_dict(orient="records")
+        
+        # Guardar en historial DESPUÉS de preparar la respuesta
+        try:
+            save_to_historial(results_df)
+        except Exception as hist_err:
+            print(f"Historial falló pero la respuesta continúa: {hist_err}")
         
         # 4. Exportar el DataFrame a lista de diccionarios instantáneamente
-        return results_df.to_dict(orient="records")
+        return response_data
         
     except Exception as e:
         import traceback
@@ -289,9 +303,13 @@ async def predict_upload_db(file: UploadFile = File(...)):
         results_df['probabilidad'] = probs.astype(float)
         results_df['riesgo'] = np.where(preds == 1, "Alto", "Bajo")
         
-        save_to_historial(results_df)
-        
         response_data = results_df.to_dict(orient="records")
+        
+        # Guardar en historial DESPUÉS de preparar la respuesta
+        try:
+            save_to_historial(results_df)
+        except Exception as hist_err:
+            print(f"Historial falló pero la respuesta continúa: {hist_err}")
         
     except HTTPException:
         raise
