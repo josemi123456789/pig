@@ -22,6 +22,7 @@ export default function App() {
 
   // --- Estado para Evaluación Masiva ---
   const [file, setFile] = useState(null);
+  const [dbFile, setDbFile] = useState(null);
   const [batchLoading, setBatchLoading] = useState(false);
   const [batchResults, setBatchResults] = useState(null);
   const [batchError, setBatchError] = useState(null);
@@ -119,14 +120,29 @@ export default function App() {
     }
   };
 
-  const handleFetchFromDB = async () => {
+  const handleDbFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setDbFile(e.target.files[0]);
+    }
+  };
+
+  const handleSubmitDB = async (e) => {
+    e.preventDefault();
+    if (!dbFile) return;
+
     setBatchLoading(true);
     setBatchError(null);
     setBatchResults(null);
 
+    const formData = new FormData();
+    formData.append('file', dbFile);
+
     try {
-      const response = await fetch(`${API_URL}/predict/db/`);
-      if (!response.ok) throw new Error('Error conectando con la Base de Datos');
+      const response = await fetch(`${API_URL}/predict/upload-db/`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!response.ok) throw new Error('Error conectando con la Base de Datos o archivo inválido');
       const results = await response.json();
       const sortedResults = results.sort((a, b) => b.prediccion - a.prediccion);
       setBatchResults(sortedResults);
@@ -307,16 +323,24 @@ export default function App() {
               </form>
               {batchError && <p className="mt-4 text-red-500 text-sm">{batchError}</p>}
               
-              <div className="mt-6 flex flex-col items-center">
-                <span className="text-slate-400 text-sm mb-4 font-medium">- Ó -</span>
-                <button 
-                  onClick={handleFetchFromDB} 
-                  disabled={batchLoading} 
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg hover:shadow-indigo-500/30 flex items-center gap-2 disabled:bg-indigo-400"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
-                  {batchLoading ? 'Extrayendo Datos...' : 'Evaluar desde Base de Datos'}
-                </button>
+              <div className="mt-8 pt-8 border-t border-slate-200">
+                <h2 className="text-xl font-semibold mb-4 text-slate-700">O Cargar Archivo SQLite (.db)</h2>
+                <form onSubmit={handleSubmitDB} className="flex flex-col items-center">
+                  <label className="flex flex-col items-center justify-center w-full max-w-lg h-32 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <svg className="w-8 h-8 mb-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                      <p className="mb-2 text-sm text-slate-500"><span className="font-semibold">Haz clic para seleccionar</span> o arrastra un archivo</p>
+                      <p className="text-xs text-slate-500">Solo archivos SQLite (.db)</p>
+                    </div>
+                    <input type="file" accept=".db,.sqlite" onChange={handleDbFileChange} className="hidden" />
+                  </label>
+                  {dbFile && <p className="mt-3 text-sm text-indigo-600 font-medium">Archivo seleccionado: {dbFile.name}</p>}
+                  
+                  <button type="submit" disabled={!dbFile || batchLoading} className="mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-8 rounded-lg transition-colors shadow-md disabled:bg-indigo-400 flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                    {batchLoading ? 'Procesando...' : 'Evaluar desde Base de Datos'}
+                  </button>
+                </form>
               </div>
             </div>
 

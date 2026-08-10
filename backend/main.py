@@ -7,6 +7,8 @@ import pandas as pd
 import numpy as np
 import io
 import os
+import tempfile
+import shutil
 from schemas import PredictRequest, PredictResponse
 
 app = FastAPI(title="API Sistema de Alerta Temprana")
@@ -182,3 +184,72 @@ async def predict_db():
         import traceback
         tb = traceback.format_exc()
         raise HTTPException(status_code=500, detail=f"Error conectando a BD o procesando: {str(e)}")
+
+@app.post("/predict/upload-db/")
+async def predict_upload_db(file: UploadFile = File(...)):
+    if model is None or encoders is None:
+        raise HTTPException(status_code=503, detail="Modelo no cargado.")
+        
+    if not (file.filename.endswith('.db') or file.filename.endswith('.sqlite')):
+        raise HTTPException(status_code=400, detail="El archivo debe ser una base de datos SQLite (.db o .sqlite).")
+        
+    # Guardar archivo temporal
+    fd, temp_path = tempfile.mkstemp(suffix=".db")
+    try:
+        with os.fdopen(fd, 'wb') as f:
+            shutil.copyfileobj(file.file, f)
+            
+        # Conectar a la BD temporal
+        temp_engine = create_engine(f"sqlite:///{temp_path}")
+        
+        with temp_engine.connect() as conn:
+            query = text("SELECT * FROM estudiantes")
+            df = pd.read_sql(query, conn)
+            
+        if df.empty:
+            raise HTTPException(status_code=404, detail="La tabla estudiantes está vacía.")
+            
+        required_cols = [
+            'promedio_actual', 'tareas_no_entregadas', 'reprobaciones_previas', 
+            'dias_desde_ultima_conexion', 'minutos_uso_semanal', 'dias_atraso_pagos', 
+            'tipo_matricula_beca', 'nivel_socioeconomico', 'modalidad_matricula'
+        ]
+        
+        missing_cols = [col for col in required_cols if col not in df.columns]
+        if missing_cols:
+            raise HTTPException(status_code=400, detail=f"Faltan columnas requeridas en la BD: {missing_cols}")
+        
+        results_df = df.copy()
+        
+        # 1. Transformación de categorías vectorizada
+        for col in ['nivel_socioeconomico', 'modalidad_matricula']:
+            if col in df.columns:
+                valid_classes = encoders[col].classes_
+                default_class = valid_classes[0]
+                df[col] = np.where(df[col].isin(valid_classes), df[col], default_class)
+                df[col] = encoders[col].transform(df[col])
+                
+        X = df[required_cols]
+        
+        # 2. Predicción masiva
+        preds = model.predict(X)
+        probs = model.predict_proba(X)[:, 1]
+        
+        # 3. Construcción de resultados vectorizada
+        results_df['prediccion'] = preds.astype(int)
+        results_df['probabilidad'] = probs.astype(float)
+        results_df['riesgo'] = np.where(preds == 1, "Alto", "Bajo")
+        
+        return results_df.to_dict(orient="records")
+        
+    except Exception as e:
+        import traceback
+        tb = traceback.format_exc()
+        raise HTTPException(status_code=500, detail=f"Error procesando la base de datos: {str(e)}")
+    finally:
+        # Eliminar archivo temporal
+        if os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except:
+                pass
