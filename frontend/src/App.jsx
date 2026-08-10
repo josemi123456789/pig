@@ -209,22 +209,21 @@ export default function App() {
         body: formDataToUpload,
       });
 
+      const data = await response.json();
+      
       if (!response.ok) {
-        const errData = await response.json().catch(() => null);
-        const errorMsg = errData && errData.detail ? errData.detail : 'Error procesando el archivo BD';
-        throw new Error(errorMsg);
+        throw new Error(data.detail || 'Error procesando el archivo BD');
       }
       
-      const results = await response.json();
-      const sortedResults = results.sort((a, b) => b.prediccion - a.prediccion);
+      const sortedResults = data.sort((a, b) => b.prediccion - a.prediccion);
       
       setBatchResults(sortedResults);
       setCurrentPage(1);
       setActiveMenu('Resultados');
-    } catch (err) {
-      setBatchError(err.message);
-      console.error('Error:', err);
-      alert(`Ocurrió un error: ${err.message}`);
+    } catch (error) {
+      setBatchError(error.message);
+      console.error('Error:', error);
+      alert(`Ocurrió un error: ${error.message}`);
     } finally {
       setIsLoadingDB(false);
     }
