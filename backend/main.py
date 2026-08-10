@@ -1,6 +1,6 @@
 # Server reload trigger
 from fastapi import FastAPI, HTTPException, UploadFile, File
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, MetaData, Table, Column, Integer, String, Float, DateTime, func
 from fastapi.middleware.cors import CORSMiddleware
 import joblib
 import pandas as pd
@@ -24,6 +24,45 @@ app.add_middleware(
 # Variables globales
 model = None
 encoders = None
+
+# Base de datos global e historial
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./historial.db")
+engine = create_engine(DATABASE_URL)
+metadata = MetaData()
+
+historial_table = Table(
+    'Historial', metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('nombre_estudiante', String, nullable=True),
+    Column('fecha', DateTime, server_default=func.now()),
+    Column('probabilidad', Float),
+    Column('nivel_riesgo', String)
+)
+
+metadata.create_all(engine)
+
+def save_to_historial(df):
+    try:
+        historial_df = pd.DataFrame()
+        if 'nombre' in df.columns:
+            historial_df['nombre_estudiante'] = df['nombre']
+        elif 'nombre_estudiante' in df.columns:
+            historial_df['nombre_estudiante'] = df['nombre_estudiante']
+        else:
+            historial_df['nombre_estudiante'] = [f"Estudiante {i+1}" for i in range(len(df))]
+            
+        historial_df['probabilidad'] = df['probabilidad']
+        historial_df['nivel_riesgo'] = df['riesgo']
+        
+        with engine.begin() as conn:
+            for record in historial_df.to_dict(orient="records"):
+                conn.execute(historial_table.insert().values(
+                    nombre_estudiante=record['nombre_estudiante'],
+                    probabilidad=record['probabilidad'],
+                    nivel_riesgo=record['nivel_riesgo']
+                ))
+    except Exception as e:
+        print(f"Error guardando en historial: {e}")
 
 @app.on_event("startup")
 def load_artifacts():
@@ -121,15 +160,14 @@ async def predict_batch(file: UploadFile = File(...)):
         results_df['probabilidad'] = probs.astype(float)
         results_df['riesgo'] = np.where(preds == 1, "Alto", "Bajo")
         
+        save_to_historial(results_df)
+        
         return results_df.to_dict(orient="records")
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error procesando el archivo: {str(e)}")
 
-# Configuración de URL de conexión a base de datos
-# Asegúrate de configurar la variable de entorno DATABASE_URL en tu entorno (Render/Hostinger)
-DATABASE_URL = os.getenv("DATABASE_URL")
-engine = create_engine(DATABASE_URL)
+# La configuración de BD global se movió arriba
 
 @app.get("/predict/db/")
 async def predict_db():
@@ -176,6 +214,8 @@ async def predict_db():
         results_df['prediccion'] = preds.astype(int)
         results_df['probabilidad'] = probs.astype(float)
         results_df['riesgo'] = np.where(preds == 1, "Alto", "Bajo")
+        
+        save_to_historial(results_df)
         
         # 4. Exportar el DataFrame a lista de diccionarios instantáneamente
         return results_df.to_dict(orient="records")
@@ -240,6 +280,8 @@ async def predict_upload_db(file: UploadFile = File(...)):
         results_df['probabilidad'] = probs.astype(float)
         results_df['riesgo'] = np.where(preds == 1, "Alto", "Bajo")
         
+        save_to_historial(results_df)
+        
         return results_df.to_dict(orient="records")
         
     except Exception as e:
@@ -253,3 +295,23 @@ async def predict_upload_db(file: UploadFile = File(...)):
                 os.remove(temp_path)
             except:
                 pass
+
+@app.get("/historial/")
+async def get_historial():
+    try:
+        with engine.connect() as conn:
+            query = historial_table.select().order_by(historial_table.c.fecha.desc())
+            result = conn.execute(query).fetchall()
+            
+            data = []
+            for row in result:
+                data.append({
+                    "id": row.id,
+                    "nombre_estudiante": row.nombre_estudiante,
+                    "fecha": row.fecha.strftime("%Y-%m-%d %H:%M:%S") if row.fecha else None,
+                    "probabilidad": row.probabilidad,
+                    "nivel_riesgo": row.nivel_riesgo
+                })
+            return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error obteniendo historial: {str(e)}")

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 
 export default function App() {
@@ -52,8 +52,18 @@ export default function App() {
   const [batchResults, setBatchResults] = useState(null);
   const [batchError, setBatchError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [historyData, setHistoryData] = useState([]);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+  useEffect(() => {
+    if (activeMenu === 'Historial') {
+      fetch(`${API_URL}/historial/`)
+        .then(res => res.json())
+        .then(data => setHistoryData(data))
+        .catch(err => console.error("Error fetching historial:", err));
+    }
+  }, [activeMenu, API_URL]);
 
   // Funciones de Login
   const handleLoginChange = (e) => {
@@ -714,24 +724,26 @@ export default function App() {
                           </tr>
                         ))
                       ) : (
-                        [
-                          { nombre: "Ana Martínez", fecha: "2024-05-10", prob: "12.5%", riesgo: "Bajo", isRisk: false },
-                          { nombre: "Carlos Gómez", fecha: "2024-05-09", prob: "78.2%", riesgo: "Alto", isRisk: true },
-                          { nombre: "Lucía Fernández", fecha: "2024-05-08", prob: "5.1%", riesgo: "Bajo", isRisk: false },
-                          { nombre: "Roberto Silva", fecha: "2024-05-07", prob: "82.9%", riesgo: "Alto", isRisk: true },
-                          { nombre: "María Torres", fecha: "2024-05-05", prob: "34.0%", riesgo: "Bajo", isRisk: false },
-                        ].map((record, index) => (
-                          <tr key={index} className="border-b last:border-b-0 hover:bg-gray-50">
-                            <td className="px-6 py-4 font-medium text-gray-800">{record.nombre}</td>
-                            <td className="px-6 py-4 text-center">{record.fecha}</td>
-                            <td className="px-6 py-4 text-center font-bold text-gray-700">{record.prob}</td>
-                            <td className="px-6 py-4 text-center">
-                              <span className={`px-3 py-1 rounded-full text-xs font-bold ${record.isRisk ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                                {record.riesgo}
-                              </span>
+                        historyData.length > 0 ? (
+                          historyData.map((record, index) => (
+                            <tr key={index} className="border-b last:border-b-0 hover:bg-gray-50">
+                              <td className="px-6 py-4 font-medium text-gray-800">{record.nombre_estudiante}</td>
+                              <td className="px-6 py-4 text-center">{record.fecha}</td>
+                              <td className="px-6 py-4 text-center font-bold text-gray-700">{(record.probabilidad * 100).toFixed(1)}%</td>
+                              <td className="px-6 py-4 text-center">
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${record.nivel_riesgo === 'Alto' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                  {record.nivel_riesgo}
+                                </span>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
+                              No hay registros en el historial.
                             </td>
                           </tr>
-                        ))
+                        )
                       )}
                     </tbody>
                   </table>
