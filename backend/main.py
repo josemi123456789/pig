@@ -58,7 +58,7 @@ def predict(data: PredictRequest):
         df = pd.DataFrame(input_data)
         
         # Aplicar codificadores
-        for col in ['nivel_socioeconomico', 'modalidad_matricula']:
+        for col in ['tipo_matricula_beca', 'nivel_socioeconomico', 'modalidad_matricula']:
             if df[col][0] not in encoders[col].classes_:
                 # Si el valor no fue visto, usar el primero como fallback (o lanzar error)
                 df[col] = encoders[col].transform([encoders[col].classes_[0]])
@@ -102,7 +102,7 @@ async def predict_batch(file: UploadFile = File(...)):
             
         results_df = df.copy() 
         
-        for col in ['nivel_socioeconomico', 'modalidad_matricula']:
+        for col in ['tipo_matricula_beca', 'nivel_socioeconomico', 'modalidad_matricula']:
             if col in df.columns:
                 valid_classes = encoders[col].classes_
                 default_class = valid_classes[0]
@@ -157,7 +157,7 @@ async def predict_db():
         results_df = df.copy()
         
         # 1. Transformación de categorías vectorizada
-        for col in ['nivel_socioeconomico', 'modalidad_matricula']:
+        for col in ['tipo_matricula_beca', 'nivel_socioeconomico', 'modalidad_matricula']:
             if col in df.columns:
                 valid_classes = encoders[col].classes_
                 default_class = valid_classes[0]
