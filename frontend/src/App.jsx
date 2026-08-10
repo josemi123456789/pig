@@ -198,11 +198,7 @@ export default function App() {
       setCurrentPage(1);
     } catch (err) {
       setBatchError(err.message);
-      // Simulate for demo
-      setTimeout(() => {
-        setBatchLoading(false);
-        alert('Funcionalidad simulada por el momento.');
-      }, 1500);
+      setBatchLoading(false);
     } finally {
       setBatchLoading(false);
     }
