@@ -124,9 +124,9 @@ async def predict_batch(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error procesando el archivo: {str(e)}")
 
-# Configuración de URL de conexión a base de datos (Ejemplo MySQL)
-# Cambia los valores por los de tu servidor VPS / Hostinger
-DATABASE_URL = "mysql+mysqlconnector://root:@localhost/alerta_temprana"
+# Configuración de URL de conexión a base de datos
+# Asegúrate de configurar la variable de entorno DATABASE_URL en tu entorno (Render/Hostinger)
+DATABASE_URL = os.getenv("DATABASE_URL")
 engine = create_engine(DATABASE_URL)
 
 @app.get("/predict/db/")
