@@ -406,7 +406,7 @@ export default function App() {
               </div>
             </div>
             <div className="text-xs text-gray-500">
-              Última actualización: <br/> 08/05/2024 14:30
+              Última actualización: <br/> {new Date().toLocaleDateString()} {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
             </div>
           </div>
         </div>
@@ -627,7 +627,7 @@ export default function App() {
               </div>
               
               <div className="mt-8 pt-4 pb-4 text-center text-xs text-gray-400">
-                © 2024 Sistema de Predicción de Deserción Estudiantil. Todos los derechos reservados.
+                © {new Date().getFullYear()} Sistema de Predicción de Deserción Estudiantil. Todos los derechos reservados.
               </div>
             </div>
           )}
@@ -796,8 +796,47 @@ export default function App() {
             </div>
           )}
 
-          {/* VISTA 6 & 7: DOCUMENTACIÓN Y ACERCA DEL MODELO */}
-          {(activeMenu === 'Documentación' || activeMenu === 'Acerca del Modelo') && (
+          {/* VISTA 6: DOCUMENTACIÓN */}
+          {activeMenu === 'Documentación' && (
+            <div className="max-w-4xl mx-auto animate-fade-in">
+              <div className="mb-6 md:mb-8">
+                <h2 className="text-2xl font-bold text-gray-800">Documentación de Uso</h2>
+                <p className="text-gray-500 mt-1">Guía rápida para utilizar el sistema predictivo.</p>
+              </div>
+
+              <div className="grid gap-6">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-800">¿Cómo predecir masivamente?</h3>
+                  </div>
+                  <ul className="text-gray-600 text-sm leading-relaxed space-y-2 ml-4 list-disc">
+                    <li>Dirígete a la sección <strong>Subir CSV / Conectar DB</strong>.</li>
+                    <li>Sube un archivo <code>.csv</code> con múltiples estudiantes, o un archivo <code>.db</code> o <code>.sqlite</code>.</li>
+                    <li>El archivo debe contener obligatoriamente las columnas: <em>promedio_actual, tareas_no_entregadas, reprobaciones_previas, dias_desde_ultima_conexion, minutos_uso_semanal, dias_atraso_pagos</em>.</li>
+                    <li>Haz clic en procesar para obtener una tabla con el riesgo de cada estudiante y expórtalo a Excel.</li>
+                  </ul>
+                </div>
+                
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
+                   <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-800">Evaluación Individual</h3>
+                  </div>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    Si solo deseas evaluar a un estudiante a la vez en lugar de toda tu base de datos, entra a <strong>Evaluar Estudiante</strong> y llena el formulario con los datos de un alumno en específico. La probabilidad y la clasificación se generarán instantáneamente.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* VISTA 7: ACERCA DEL MODELO */}
+          {activeMenu === 'Acerca del Modelo' && (
             <div className="max-w-4xl mx-auto animate-fade-in">
               <div className="mb-6 md:mb-8">
                 <h2 className="text-2xl font-bold text-gray-800">{activeMenu}</h2>
