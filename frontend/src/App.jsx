@@ -272,6 +272,9 @@ export default function App() {
   const totalPages = batchResults ? Math.ceil(batchResults.length / ITEMS_PER_PAGE) : 0;
   const currentItems = batchResults ? batchResults.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE) : [];
 
+  const historyTotalPages = Math.ceil(historyData.length / ITEMS_PER_PAGE);
+  const currentHistoryItems = historyData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
   const exportToExcel = () => {
     if (!batchResults || batchResults.length === 0) return;
     const ws = XLSX.utils.json_to_sheet(batchResults);
@@ -762,11 +765,11 @@ export default function App() {
                           </tr>
                         ))
                       ) : (
-                        historyData.filter(record => 
+                        currentHistoryItems.filter(record => 
                           record.nombre_estudiante.toLowerCase().includes(historySearchTerm.toLowerCase()) || 
                           record.nivel_riesgo.toLowerCase().includes(historySearchTerm.toLowerCase())
                         ).length > 0 ? (
-                          historyData.filter(record => 
+                          currentHistoryItems.filter(record => 
                             record.nombre_estudiante.toLowerCase().includes(historySearchTerm.toLowerCase()) || 
                             record.nivel_riesgo.toLowerCase().includes(historySearchTerm.toLowerCase())
                           ).map((record, index) => (
@@ -792,8 +795,10 @@ export default function App() {
                     </tbody>
                   </table>
                 </div>
-                {/* Controles de paginación solo para Resultados */}
-                {activeMenu === 'Resultados' && batchResults && totalPages > 1 && (
+                
+                {/* Controles de paginación universales (para Resultados y Historial) */}
+                {((activeMenu === 'Resultados' && batchResults && totalPages > 1) || 
+                  ((activeMenu === 'Historial' || (activeMenu === 'Resultados' && !batchResults)) && historyTotalPages > 1)) && (
                   <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 flex items-center justify-between">
                     <button 
                       onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
@@ -803,11 +808,11 @@ export default function App() {
                       Anterior
                     </button>
                     <span className="text-sm text-gray-500 font-medium">
-                      Página {currentPage} de {totalPages}
+                      Página {currentPage} de {activeMenu === 'Resultados' && batchResults ? totalPages : historyTotalPages}
                     </span>
                     <button 
-                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, activeMenu === 'Resultados' && batchResults ? totalPages : historyTotalPages))}
+                      disabled={currentPage === (activeMenu === 'Resultados' && batchResults ? totalPages : historyTotalPages)}
                       className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       Siguiente
