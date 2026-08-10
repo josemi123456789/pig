@@ -158,6 +158,7 @@ export default function App() {
       
       setBatchResults(sortedResults);
       setCurrentPage(1);
+      setActiveMenu('Resultados');
     } catch (err) {
       setBatchError(err.message);
       setBatchLoading(false);
@@ -196,6 +197,7 @@ export default function App() {
       
       setBatchResults(sortedResults);
       setCurrentPage(1);
+      setActiveMenu('Resultados');
     } catch (err) {
       setBatchError(err.message);
       setBatchLoading(false);
@@ -665,12 +667,22 @@ export default function App() {
             </div>
           )}
 
-          {/* VISTA 4 & 5: RESULTADOS Y HISTORIAL (Demo estática) */}
+          {/* VISTA 4 & 5: RESULTADOS Y HISTORIAL */}
           {(activeMenu === 'Resultados' || activeMenu === 'Historial') && (
             <div className="max-w-6xl mx-auto animate-fade-in">
-               <div className="mb-6 md:mb-8">
-                <h2 className="text-2xl font-bold text-gray-800">{activeMenu} Recientes</h2>
-                <p className="text-gray-500 mt-1">Registros de evaluaciones anteriores del modelo.</p>
+               <div className="mb-6 md:mb-8 flex justify-between items-end">
+                 <div>
+                   <h2 className="text-2xl font-bold text-gray-800">{activeMenu} Recientes</h2>
+                   <p className="text-gray-500 mt-1">
+                     {activeMenu === 'Resultados' && batchResults ? 'Resultados del último procesamiento.' : 'Registros de evaluaciones anteriores del modelo.'}
+                   </p>
+                 </div>
+                 {activeMenu === 'Resultados' && batchResults && (
+                   <button onClick={exportToExcel} className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg text-sm shadow-sm flex items-center gap-2">
+                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                     Exportar a Excel
+                   </button>
+                 )}
               </div>
 
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
@@ -679,30 +691,47 @@ export default function App() {
                     <thead className="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-200">
                       <tr>
                         <th className="px-6 py-4">Nombre Estudiante</th>
-                        <th className="px-6 py-4">Fecha</th>
-                        <th className="px-6 py-4">Probabilidad</th>
+                        {activeMenu === 'Resultados' && batchResults && <th className="px-6 py-4 text-center">Matrícula</th>}
+                        <th className="px-6 py-4 text-center">{activeMenu === 'Resultados' && batchResults ? 'Promedio' : 'Fecha'}</th>
+                        <th className="px-6 py-4 text-center">Probabilidad</th>
                         <th className="px-6 py-4 text-center">Nivel de Riesgo</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {[
-                        { nombre: "Ana Martínez", fecha: "2024-05-10", prob: "12%", riesgo: "Bajo", isRisk: false },
-                        { nombre: "Carlos Gómez", fecha: "2024-05-09", prob: "78%", riesgo: "Alto", isRisk: true },
-                        { nombre: "Lucía Fernández", fecha: "2024-05-08", prob: "5%", riesgo: "Bajo", isRisk: false },
-                        { nombre: "Roberto Silva", fecha: "2024-05-07", prob: "82%", riesgo: "Alto", isRisk: true },
-                        { nombre: "María Torres", fecha: "2024-05-05", prob: "34%", riesgo: "Medio", isRisk: false },
-                      ].map((record, index) => (
-                        <tr key={index} className="border-b last:border-b-0 hover:bg-gray-50">
-                          <td className="px-6 py-4 font-medium text-gray-800">{record.nombre}</td>
-                          <td className="px-6 py-4">{record.fecha}</td>
-                          <td className="px-6 py-4 font-bold text-gray-700">{record.prob}</td>
-                          <td className="px-6 py-4 text-center">
-                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${record.isRisk ? 'bg-red-100 text-red-700' : (record.riesgo === 'Medio' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700')}`}>
-                              {record.riesgo}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                      {activeMenu === 'Resultados' && batchResults ? (
+                        currentItems.map((record, index) => (
+                          <tr key={index} className="border-b last:border-b-0 hover:bg-gray-50">
+                            <td className="px-6 py-4 font-medium text-gray-800">{record.nombre || `Estudiante #${index+1}`}</td>
+                            <td className="px-6 py-4 text-center">{record.modalidad_matricula || 'N/A'}</td>
+                            <td className="px-6 py-4 text-center">{record.promedio_actual !== undefined ? record.promedio_actual : 'N/A'}</td>
+                            <td className="px-6 py-4 text-center font-bold text-gray-700">{(record.probabilidad * 100).toFixed(1)}%</td>
+                            <td className="px-6 py-4 text-center">
+                              <span className={`px-3 py-1 rounded-full text-xs font-bold ${record.prediccion === 1 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                {record.riesgo}
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        [
+                          { nombre: "Ana Martínez", fecha: "2024-05-10", prob: "12.5%", riesgo: "Bajo", isRisk: false },
+                          { nombre: "Carlos Gómez", fecha: "2024-05-09", prob: "78.2%", riesgo: "Alto", isRisk: true },
+                          { nombre: "Lucía Fernández", fecha: "2024-05-08", prob: "5.1%", riesgo: "Bajo", isRisk: false },
+                          { nombre: "Roberto Silva", fecha: "2024-05-07", prob: "82.9%", riesgo: "Alto", isRisk: true },
+                          { nombre: "María Torres", fecha: "2024-05-05", prob: "34.0%", riesgo: "Bajo", isRisk: false },
+                        ].map((record, index) => (
+                          <tr key={index} className="border-b last:border-b-0 hover:bg-gray-50">
+                            <td className="px-6 py-4 font-medium text-gray-800">{record.nombre}</td>
+                            <td className="px-6 py-4 text-center">{record.fecha}</td>
+                            <td className="px-6 py-4 text-center font-bold text-gray-700">{record.prob}</td>
+                            <td className="px-6 py-4 text-center">
+                              <span className={`px-3 py-1 rounded-full text-xs font-bold ${record.isRisk ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                {record.riesgo}
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
