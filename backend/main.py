@@ -127,14 +127,14 @@ def predict(data: PredictRequest):
         raise HTTPException(status_code=500, detail=f"Error en la predicción: {str(e)}")
 
 @app.post("/predict/batch/")
-async def predict_batch(file: UploadFile = File(...)):
+def predict_batch(file: UploadFile = File(...)):
     if model is None or encoders is None:
         raise HTTPException(status_code=503, detail="Modelo no cargado.")
     if not file.filename.endswith('.csv'):
         raise HTTPException(status_code=400, detail="El archivo debe ser un CSV.")
         
     try:
-        contents = await file.read()
+        contents = file.file.read()
         df = pd.read_csv(io.StringIO(contents.decode('utf-8')))
         
         required_cols = [
@@ -244,7 +244,7 @@ async def predict_db():
         raise HTTPException(status_code=500, detail=f"Error conectando a BD o procesando: {str(e)}")
 
 @app.post("/predict/upload-db/")
-async def predict_upload_db(file: UploadFile = File(...)):
+def predict_upload_db(file: UploadFile = File(...)):
     if model is None or encoders is None:
         raise HTTPException(status_code=503, detail="Modelo no cargado.")
         
