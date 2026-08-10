@@ -58,7 +58,7 @@ export default function App() {
 
   useEffect(() => {
     if (activeMenu === 'Historial') {
-      fetch(`${API_URL}/historial/`)
+      fetch(`${API_URL}/historial`)
         .then(res => res.json())
         .then(data => setHistoryData(data))
         .catch(err => console.error("Error fetching historial:", err));

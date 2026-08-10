@@ -296,7 +296,7 @@ async def predict_upload_db(file: UploadFile = File(...)):
             except:
                 pass
 
-@app.get("/historial/")
+@app.get("/historial")
 async def get_historial():
     try:
         with engine.connect() as conn:
