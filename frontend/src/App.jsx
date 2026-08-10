@@ -47,7 +47,8 @@ export default function App() {
 
   // --- Estado para Evaluación Masiva ---
   const [file, setFile] = useState(null);
-  const [batchLoading, setBatchLoading] = useState(false);
+  const [isLoadingCSV, setIsLoadingCSV] = useState(false);
+  const [isLoadingDB, setIsLoadingDB] = useState(false);
   const [batchResults, setBatchResults] = useState(null);
   const [batchError, setBatchError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -138,7 +139,7 @@ export default function App() {
     if (e) e.preventDefault();
     if (!file) return;
     
-    setBatchLoading(true);
+    setIsLoadingCSV(true);
     setBatchError(null);
     setBatchResults(null);
 
@@ -161,9 +162,9 @@ export default function App() {
       setActiveMenu('Resultados');
     } catch (err) {
       setBatchError(err.message);
-      setBatchLoading(false);
+      setIsLoadingCSV(false);
     } finally {
-      setBatchLoading(false);
+      setIsLoadingCSV(false);
     }
   };
 
@@ -177,7 +178,7 @@ export default function App() {
   const handleSubmitDBUpload = async () => {
     if (!dbFile) return;
     
-    setBatchLoading(true);
+    setIsLoadingDB(true);
     setBatchError(null);
     setBatchResults(null);
 
@@ -200,18 +201,18 @@ export default function App() {
       setActiveMenu('Resultados');
     } catch (err) {
       setBatchError(err.message);
-      setBatchLoading(false);
+      setIsLoadingDB(false);
     } finally {
-      setBatchLoading(false);
+      setIsLoadingDB(false);
     }
   };
 
   // Funciones BD Form
   const handleTestConnectionDB = async (e) => {
     e.preventDefault();
-    setBatchLoading(true);
+    setIsLoadingDB(true);
     setTimeout(() => {
-      setBatchLoading(false);
+      setIsLoadingDB(false);
       alert('Funcionalidad de conexión a BD simulada por el momento.');
     }, 1500);
   };
@@ -471,10 +472,10 @@ export default function App() {
                           handleActionClick('csv');
                         }
                       }}
-                      disabled={batchLoading}
+                      disabled={isLoadingCSV}
                       className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-lg transition-colors mb-6 shadow-sm"
                     >
-                      {batchLoading ? 'Procesando...' : (file ? 'Analizar Archivo' : 'Seleccionar archivo')}
+                      {isLoadingCSV ? 'Procesando...' : (file ? 'Analizar Archivo' : 'Seleccionar archivo')}
                     </button>
 
                     <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex gap-3 items-start">
@@ -579,10 +580,10 @@ export default function App() {
                               handleActionClick('dbFile');
                             }
                           }}
-                          disabled={batchLoading}
+                          disabled={isLoadingDB}
                           className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-lg transition-colors shadow-sm"
                         >
-                          {batchLoading ? 'Procesando...' : (dbFile ? 'Cargar Base de Datos' : 'Seleccionar archivo')}
+                          {isLoadingDB ? 'Procesando...' : (dbFile ? 'Cargar Base de Datos' : 'Seleccionar archivo')}
                         </button>
                       </div>
                     </div>
