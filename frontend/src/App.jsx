@@ -126,7 +126,7 @@ export default function App() {
 
     try {
       const response = await fetch(`${API_URL}/predict/db/`);
-      if (!response.ok) throw new Error('Error conectando con la Base de Datos MySQL');
+      if (!response.ok) throw new Error('Error conectando con la Base de Datos');
       const results = await response.json();
       const sortedResults = results.sort((a, b) => b.prediccion - a.prediccion);
       setBatchResults(sortedResults);
@@ -315,7 +315,7 @@ export default function App() {
                   className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg hover:shadow-indigo-500/30 flex items-center gap-2 disabled:bg-indigo-400"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
-                  {batchLoading ? 'Extrayendo Datos...' : 'Evaluar desde Base de Datos MySQL'}
+                  {batchLoading ? 'Extrayendo Datos...' : 'Evaluar desde Base de Datos'}
                 </button>
               </div>
             </div>
