@@ -230,6 +230,9 @@ async def predict_upload_db(file: UploadFile = File(...)):
     if model is None or encoders is None:
         raise HTTPException(status_code=503, detail="Modelo no cargado.")
         
+    if file.filename.endswith('.sql'):
+        raise HTTPException(status_code=400, detail="Para bases de datos MySQL/PostgreSQL usa la Conexión Directa. Aquí solo se admiten archivos binarios .db o .sqlite")
+        
     if not (file.filename.endswith('.db') or file.filename.endswith('.sqlite')):
         raise HTTPException(status_code=400, detail="El archivo debe ser una base de datos SQLite (.db o .sqlite).")
         

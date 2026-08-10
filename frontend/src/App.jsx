@@ -179,7 +179,7 @@ export default function App() {
       setActiveMenu('Resultados');
     } catch (err) {
       setBatchError(err.message);
-      console.error("Error capturado:", err);
+      console.error('Error:', err);
       alert(`Ocurrió un error: ${err.message}`);
     } finally {
       setIsLoadingCSV(false);
@@ -223,7 +223,7 @@ export default function App() {
       setActiveMenu('Resultados');
     } catch (err) {
       setBatchError(err.message);
-      console.error("Error capturado:", err);
+      console.error('Error:', err);
       alert(`Ocurrió un error: ${err.message}`);
     } finally {
       setIsLoadingDB(false);
