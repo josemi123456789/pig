@@ -301,7 +301,7 @@ export default function App() {
             <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
               <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"></path></svg>
             </div>
-            <h1 className="text-2xl font-bold text-gray-800">Bienvenido al SAT</h1>
+            <h1 className="text-2xl font-bold text-gray-800">Bienvenido al SATD</h1>
             <p className="text-sm text-gray-500 mt-1">Sistema de Alerta Temprana de Deserción</p>
           </div>
           <form onSubmit={handleLoginSubmit} className="space-y-5">
