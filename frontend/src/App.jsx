@@ -162,7 +162,11 @@ export default function App() {
         body: formDataToUpload,
       });
 
-      if (!response.ok) throw new Error('Error procesando el archivo CSV');
+      if (!response.ok) {
+        const errData = await response.json().catch(() => null);
+        const errorMsg = errData && errData.detail ? errData.detail : 'Error procesando el archivo CSV';
+        throw new Error(errorMsg);
+      }
       
       const results = await response.json();
       const sortedResults = results.sort((a, b) => b.prediccion - a.prediccion);
@@ -172,7 +176,8 @@ export default function App() {
       setActiveMenu('Resultados');
     } catch (err) {
       setBatchError(err.message);
-      setIsLoadingCSV(false);
+      console.error("Error capturado:", err);
+      alert(`Ocurrió un error: ${err.message}`);
     } finally {
       setIsLoadingCSV(false);
     }
@@ -201,7 +206,11 @@ export default function App() {
         body: formDataToUpload,
       });
 
-      if (!response.ok) throw new Error('Error procesando el archivo BD');
+      if (!response.ok) {
+        const errData = await response.json().catch(() => null);
+        const errorMsg = errData && errData.detail ? errData.detail : 'Error procesando el archivo BD';
+        throw new Error(errorMsg);
+      }
       
       const results = await response.json();
       const sortedResults = results.sort((a, b) => b.prediccion - a.prediccion);
@@ -211,7 +220,8 @@ export default function App() {
       setActiveMenu('Resultados');
     } catch (err) {
       setBatchError(err.message);
-      setIsLoadingDB(false);
+      console.error("Error capturado:", err);
+      alert(`Ocurrió un error: ${err.message}`);
     } finally {
       setIsLoadingDB(false);
     }
