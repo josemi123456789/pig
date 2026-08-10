@@ -7,3 +7,4 @@ joblib
 python-multipart
 sqlalchemy
 mysql-connector-python
+psycopg2-binary==2.9.9
