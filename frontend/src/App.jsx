@@ -3,7 +3,9 @@ import * as XLSX from 'xlsx';
 
 export default function App() {
   // Authentication State
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('isAuthenticated') === 'true';
+  });
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
 
   // Sidebar & Layout State
@@ -74,6 +76,7 @@ export default function App() {
     e.preventDefault();
     if (loginForm.username && loginForm.password) {
       setIsAuthenticated(true);
+      localStorage.setItem('isAuthenticated', 'true');
     }
   };
 
@@ -421,12 +424,19 @@ export default function App() {
             <button className="text-gray-500 hover:text-gray-700 transition-colors hidden sm:block">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
             </button>
-            <div className="flex items-center gap-2 cursor-pointer bg-white border border-gray-200 rounded-full pl-1 pr-3 py-1 shadow-sm hover:shadow-md transition-shadow">
+            <div 
+              onClick={() => {
+                localStorage.removeItem('isAuthenticated');
+                setIsAuthenticated(false);
+              }}
+              className="flex items-center gap-2 cursor-pointer bg-white border border-gray-200 rounded-full pl-1 pr-3 py-1 shadow-sm hover:shadow-md transition-shadow"
+              title="Cerrar Sesión"
+            >
               <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold">
                 A
               </div>
               <span className="text-sm font-medium text-gray-700">Admin</span>
-              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
             </div>
           </div>
         </header>
