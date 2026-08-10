@@ -15,3 +15,11 @@ class PredictResponse(BaseModel):
     prediccion: int = Field(..., description="0 = No Deserta, 1 = Deserta")
     probabilidad: float = Field(..., description="Probabilidad de deserción")
     riesgo: str = Field(..., description="Alto o Bajo riesgo")
+
+class DBConnectRequest(BaseModel):
+    type: str = Field(..., description="Tipo de BD (MySQL, PostgreSQL)")
+    host: str = Field(..., description="Host")
+    port: str = Field(..., description="Puerto")
+    database: str = Field(..., description="Nombre Base de Datos")
+    user: str = Field(..., description="Usuario")
+    password: str = Field(..., description="Contraseña")

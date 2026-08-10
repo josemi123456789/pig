@@ -9,7 +9,7 @@ import io
 import os
 import tempfile
 import shutil
-from schemas import PredictRequest, PredictResponse
+from schemas import PredictRequest, PredictResponse, DBConnectRequest
 
 app = FastAPI(title="API Sistema de Alerta Temprana")
 
@@ -177,6 +177,80 @@ def predict_batch(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Error procesando el archivo: {str(e)}")
 
 # La configuración de BD global se movió arriba
+
+@app.post("/predict/db-connect/")
+def predict_db_connect(db_req: DBConnectRequest):
+    if model is None or encoders is None:
+        raise HTTPException(status_code=503, detail="Modelo no cargado.")
+        
+    try:
+        if db_req.type.lower() == 'mysql':
+            db_url = f"mysql+mysqlconnector://{db_req.user}:{db_req.password}@{db_req.host}:{db_req.port}/{db_req.database}"
+        elif db_req.type.lower() == 'postgresql':
+            db_url = f"postgresql://{db_req.user}:{db_req.password}@{db_req.host}:{db_req.port}/{db_req.database}"
+        else:
+            raise HTTPException(status_code=400, detail="Tipo de BD no soportado.")
+            
+        temp_engine = create_engine(db_url, pool_timeout=10, pool_pre_ping=True)
+        
+        with temp_engine.connect() as conn:
+            query = text("SELECT * FROM estudiantes LIMIT 5000")
+            df = pd.read_sql(query, conn)
+            
+        if df.empty:
+            raise HTTPException(status_code=404, detail="La tabla estudiantes está vacía.")
+            
+        required_cols = [
+            'promedio_actual', 'tareas_no_entregadas', 'reprobaciones_previas', 
+            'dias_desde_ultima_conexion', 'minutos_uso_semanal', 'dias_atraso_pagos', 
+            'tipo_matricula_beca', 'nivel_socioeconomico', 'modalidad_matricula'
+        ]
+        
+        missing_cols = [col for col in required_cols if col not in df.columns]
+        if missing_cols:
+            raise HTTPException(status_code=400, detail=f"Faltan columnas requeridas en la BD: {missing_cols}")
+        
+        results_df = df.copy()
+        
+        # 1. Transformación de categorías vectorizada
+        for col in ['nivel_socioeconomico', 'modalidad_matricula']:
+            if col in df.columns:
+                valid_classes = encoders[col].classes_
+                default_class = valid_classes[0]
+                df[col] = np.where(df[col].isin(valid_classes), df[col], default_class)
+                df[col] = encoders[col].transform(df[col])
+                
+        X = df[required_cols]
+        
+        # 2. Predicción masiva
+        preds = model.predict(X)
+        probs = model.predict_proba(X)[:, 1]
+        
+        # 3. Construcción de resultados vectorizada
+        results_df['prediccion'] = preds.astype(int)
+        results_df['probabilidad'] = probs.astype(float)
+        results_df['riesgo'] = np.where(preds == 1, "Alto", "Bajo")
+        
+        response_data = results_df.to_dict(orient="records")
+        
+        # Guardar en historial
+        try:
+            save_to_historial(results_df)
+        except Exception as hist_err:
+            print(f"Historial falló pero la respuesta continúa: {hist_err}")
+            
+        return response_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        tb = traceback.format_exc()
+        raise HTTPException(status_code=500, detail=f"Error conectando a BD o procesando: {str(e)}")
+    finally:
+        if 'temp_engine' in locals() and temp_engine:
+            temp_engine.dispose()
+
 
 @app.get("/predict/db/")
 async def predict_db():

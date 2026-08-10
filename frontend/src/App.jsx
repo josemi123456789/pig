@@ -238,10 +238,32 @@ export default function App() {
   const handleTestConnectionDB = async (e) => {
     e.preventDefault();
     setIsLoadingDB(true);
-    setTimeout(() => {
+    try {
+      const response = await fetch(`${API_URL}/predict/db-connect/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dbConfig),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Error conectando a la base de datos');
+      }
+
+      const sortedResults = data.sort((a, b) => b.prediccion - a.prediccion);
+      setBatchResults(sortedResults);
+      setCurrentPage(1);
+      setActiveMenu('Resultados');
+    } catch (error) {
+      console.error('Error:', error);
+      setBatchError(error.message);
+      alert(`Ocurrió un error: ${error.message}`);
+    } finally {
       setIsLoadingDB(false);
-      alert('Funcionalidad de conexión a BD simulada por el momento.');
-    }, 1500);
+    }
   };
 
   // Modal logic
