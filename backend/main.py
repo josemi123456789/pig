@@ -266,8 +266,10 @@ async def predict_upload_db(file: UploadFile = File(...)):
         temp_engine = create_engine(f"sqlite:///{temp_path}")
         
         with temp_engine.connect() as conn:
-            query = text("SELECT * FROM estudiantes")
+            print("Iniciando lectura de la tabla estudiantes...")
+            query = text("SELECT * FROM estudiantes LIMIT 5000")
             df = pd.read_sql(query, conn)
+            print(f"Lectura finalizada. Registros obtenidos: {len(df)}")
             
         if df.empty:
             raise HTTPException(status_code=404, detail="La tabla estudiantes está vacía.")

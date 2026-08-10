@@ -193,36 +193,40 @@ export default function App() {
     }
   };
 
-  const handleSubmitDBUpload = async () => {
-    if (!dbFile) return;
-    
-    setIsLoadingDB(true);
-    setBatchError(null);
-    setBatchResults(null);
+  const handleSubmitDBUpload = async (e) => {
+    if (e) e.preventDefault();
 
-    const formDataToUpload = new FormData();
-    formDataToUpload.append('file', dbFile);
+    // Validación ANTES de cambiar estado de carga
+    if (!dbFile) {
+      alert('Por favor selecciona un archivo .db o .sqlite primero.');
+      return;
+    }
+
+    // Una vez validado, activar estado de carga
+    setIsLoadingDB(true);
 
     try {
+      const formDataToUpload = new FormData();
+      formDataToUpload.append('file', dbFile);
+
       const response = await fetch(`${API_URL}/predict/upload-db/`, {
         method: 'POST',
         body: formDataToUpload,
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.detail || 'Error procesando el archivo BD');
       }
-      
+
       const sortedResults = data.sort((a, b) => b.prediccion - a.prediccion);
-      
       setBatchResults(sortedResults);
       setCurrentPage(1);
       setActiveMenu('Resultados');
     } catch (error) {
-      setBatchError(error.message);
       console.error('Error:', error);
+      setBatchError(error.message);
       alert(`Ocurrió un error: ${error.message}`);
     } finally {
       setIsLoadingDB(false);
