@@ -334,7 +334,10 @@ def predict_upload_db(file: UploadFile = File(...)):
 def get_historial():
     try:
         with engine.connect() as conn:
-            query = historial_table.select().order_by(historial_table.c.fecha.desc()).limit(100)
+            query = historial_table.select().order_by(
+                historial_table.c.fecha.desc(), 
+                historial_table.c.id.asc()
+            ).limit(100)
             result = conn.execute(query).fetchall()
             
             data = []
