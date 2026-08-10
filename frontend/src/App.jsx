@@ -55,6 +55,7 @@ export default function App() {
   const [batchError, setBatchError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [historyData, setHistoryData] = useState([]);
+  const [historySearchTerm, setHistorySearchTerm] = useState('');
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -717,6 +718,20 @@ export default function App() {
                      Exportar a Excel
                    </button>
                  )}
+                 {activeMenu === 'Historial' && (
+                   <div className="relative">
+                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                     </div>
+                     <input 
+                       type="text" 
+                       placeholder="Buscar estudiante..." 
+                       value={historySearchTerm}
+                       onChange={(e) => setHistorySearchTerm(e.target.value)}
+                       className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 w-64 bg-white shadow-sm"
+                     />
+                   </div>
+                 )}
               </div>
 
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
@@ -747,8 +762,14 @@ export default function App() {
                           </tr>
                         ))
                       ) : (
-                        historyData.length > 0 ? (
-                          historyData.map((record, index) => (
+                        historyData.filter(record => 
+                          record.nombre_estudiante.toLowerCase().includes(historySearchTerm.toLowerCase()) || 
+                          record.nivel_riesgo.toLowerCase().includes(historySearchTerm.toLowerCase())
+                        ).length > 0 ? (
+                          historyData.filter(record => 
+                            record.nombre_estudiante.toLowerCase().includes(historySearchTerm.toLowerCase()) || 
+                            record.nivel_riesgo.toLowerCase().includes(historySearchTerm.toLowerCase())
+                          ).map((record, index) => (
                             <tr key={index} className="border-b last:border-b-0 hover:bg-gray-50">
                               <td className="px-6 py-4 font-medium text-gray-800">{record.nombre_estudiante}</td>
                               <td className="px-6 py-4 text-center">{record.fecha}</td>
@@ -763,7 +784,7 @@ export default function App() {
                         ) : (
                           <tr>
                             <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
-                              No hay registros en el historial.
+                              No se encontraron registros.
                             </td>
                           </tr>
                         )
